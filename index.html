@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>遠程實驗室管理系統</title>
+<script src="/socket.io/socket.io.js"></script>
+<META HTTP-EQUIV="Pragma" CONTENT="no-cache">
+<META HTTP-EQUIV="Expires" CONTENT="-1">
+<script type=text/javascript src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
+<link type="text/css" href="css/style1.css" />
+<style type="text/css">
+	.button {
+		border: 1px solid #006;
+		background: #ccf;
+	}
+	.button:hover {
+		border: 1px solid #f00;
+		background: #eef;
+	}
+	#thud {
+		-webkit-appearance: slider-vertical;
+		width: 20px;
+		height: 100px;
+	}
+	.btn {		
+		display: inline-block;
+		-webkit-border-radius: 8px;
+		-moz-border-radius: 8px;
+		border-radius: 8px;
+		-webkit-box-shadow:
+		0 8px 0 #1a74a1,
+		0 15px 20px rgba(0,0,0,.35);
+		-moz-box-shadow:
+		0 8px 0 #1a74a1,
+		0 15px 20px rgba(0,0,0,.35);
+		box-shadow:
+		0 8px 0 #1a74a1,
+		0 15px 20px rgba(0,0,0,.35);
+		color:#000;
+	}
+	.btn span {	
+		display: inline-block;
+		padding: 10px  20px;
+		font-family: "cooper-black-std-1", "cooper-black-std-2", Helvetica, Arial, sans-serif;
+		line-height: 1;
+		text-shadow: 0 -1px 1px rgba(19,65,88,.8);
+		background: #3194c6;
+		background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#3194c6), to(#5bacd6));
+		background: -moz-linear-gradient(#3194c6, #5bacd6);
+		-webkit-border-radius: 8px;
+		-moz-border-radius: 8px;
+		border-radius: 8px;
+		-webkit-box-shadow: inset 0 -1px 1px rgba(255,255,255,.15);
+		-moz-box-shadow: inset 0 -1px 1px rgba(255,255,255,.15);
+		box-shadow: inset 0 -1px 1px rgba(255,255,255,.15);
+	}
+	.btn:active {	
+		
+		-webkit-box-shadow: 
+		0 8px 0 #FF00FF,
+		0 12px 10px rgba(0,0,0,.3);
+		-moz-box-shadow: 
+		0 8px 0 #FF00FF,
+		0 12px 10px rgba(0,0,0,.3);
+		box-shadow: 
+		0 8px 0 #FF00FF,
+		0 12px 10px rgba(0,0,0,.3);
+		color:#fff;
+	}
+	.btn:active span {	
+		background: #FF00FF;
+		background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#FF00FF), to(#FF00FF));
+		background: -moz-linear-gradient(#FF00FF, #FF00FF);
+		-webkit-transform: translate(0, 4px);
+		-moz-transform: translate(0, 4px);
+		-o-transform: translate(0, 4px);
+		transform: translate(0, 4px);
+	}
+}
+</style>
+<script>
+	var socket = io.connect();
+    var lftId, midId, cntId, ritId, selfId;
+	
+	function printValue(item) {
+		var s = document.getElementById("s").value,
+		    thlr = document.getElementById("thlr").value,
+			thud = document.getElementById("thud").value;
+		socket.emit('motor', item+","+s+","+thlr+","+thud);
+		console.log("ptv.dir: "+item);
+		console.log("ptv.s: "+s);
+		console.log("ptv.thlr: "+thlr);
+		console.log("ptv.thud: "+thud);
+	}
+
+	function OnButtonDown(obj) {
+		printValue(obj.id);
+	}
+	
+	function stop() {
+		printValue('s');
+	}
+	
+    function changeDiv(id1, id2) {
+		clearTimeout(selfId);
+		var obj1 = document.getElementById(id1);
+		var obj2 = document.getElementById(id2);
+		var temp = obj1.innerHTML;
+		var objVidId, objVidSrc;
+		
+		obj1.innerHTML = obj2.innerHTML;
+		obj2.innerHTML = temp;
+			
+		var mId = obj2.getElementsByTagName('canvas')[0].id;
+		var cId = obj1.getElementsByTagName('canvas')[0].id;
+			
+		clearTimeout(midId);
+		clearTimeout(lftId);
+		clearTimeout(cntId);
+		clearTimeout(ritId);
+			
+		document.getElementById(cId).setAttribute("width",200);
+		document.getElementById(cId).setAttribute("height",150);
+		document.getElementById(mId).setAttribute("width",650);
+		document.getElementById(mId).setAttribute("height",450);
+		
+		reDrawCanvas(mId);
+	}
+	
+	function Init() {
+		midId = setTimeout(function() {
+			midCanvas(650, 450);
+		}, 50);
+		
+		lftId = setTimeout(function() {
+			lftCanvas(200, 150);
+		}, 50);
+		
+		cntId = setTimeout(function() {
+			cntCanvas(200, 150);
+		}, 50);
+		
+		ritId = setTimeout(function() {
+			ritCanvas(200, 150);
+		}, 50);
+    }
+	
+	function lftCanvas(cw, ch) {
+		drawCanvas(cw, ch, 'cvsl');
+		lftId = setTimeout(function() {
+			lftCanvas(cw, ch);
+		}, 50);
+	}
+	
+	function midCanvas(cw, ch) {
+		drawCanvas(cw, ch, 'myCanvas');
+		midId = setTimeout(function() {
+			midCanvas(cw, ch);
+		}, 50);
+	}
+	
+	function cntCanvas(cw, ch) {
+		drawCanvas(cw, ch, 'cvsc');
+		cntId = setTimeout(function() {
+			cntCanvas(cw, ch);
+		}, 50);
+	}
+	
+	function ritCanvas(cw, ch) {
+		drawCanvas(cw, ch, 'cvsr');
+		ritId = setTimeout(function() {
+			ritCanvas(cw, ch);
+		}, 50);
+	}
+	
+    function drawCanvas(cw, ch, id) {
+		var ctx = document.getElementById(id).getContext('2d');
+		var img = new Image();
+		
+		if(id == "myCanvas") {
+			img.src = 'http://10.133.74.110/image.jpg';
+		}
+		else if (id == "cvsl") {
+			img.src = 'http://10.133.74.112/image.jpg';
+		}
+		else if (id == "cvsr") {
+			img.src = 'http://10.133.74.111/image.jpg';
+		}
+		else if (id == "cvsc") {
+			img.src = 'http://10.133.74.113/image.jpg';
+		}
+		
+		img.onload = function(){
+			ctx.drawImage(img,0,0, cw, ch);
+		}
+	} 
+	
+	function reDrawCanvas(id) {
+		if (id == "cvsl") {
+			midId = setTimeout(function() {
+				lftCanvas(650, 450);
+			}, 50);
+			lftId = setTimeout(function() {
+				midCanvas(200, 150);
+			}, 50);
+			cntId = setTimeout(function() {
+				cntCanvas(200, 150);
+			}, 50);
+			ritId = setTimeout(function() {
+				ritCanvas(200, 150);
+			}, 50);
+		}
+		else if (id == "cvsc") {
+			midId = setTimeout(function() {
+				cntCanvas(650, 450);
+			}, 50);
+			lftId = setTimeout(function() {
+				lftCanvas(200, 150);
+			}, 50);
+			cntId = setTimeout(function() {
+				midCanvas(200, 150);
+			}, 50);
+			ritId = setTimeout(function() {
+				ritCanvas(200, 150);
+			}, 50);
+		}
+		else if (id == "cvsr") {
+			midId = setTimeout(function() {
+				ritCanvas(650, 450);
+			}, 50);
+			lftId = setTimeout(function() {
+				lftCanvas(200, 150);
+			}, 50);
+			cntId = setTimeout(function() {
+				cntCanvas(200, 150);
+			}, 50);
+			ritId = setTimeout(function() {
+				midCanvas(200, 150);
+			}, 50);
+		}
+		else if (id == "myCanvas") {
+			Init();
+		}
+	}
+	
+	function keyFunction() {
+		if (event.keyCode==87) {
+			printValue('u');
+		}
+		else if (event.keyCode==83) {
+			printValue('d');
+		}
+		else if (event.keyCode==65) {
+			printValue('l');
+		}
+		else if (event.keyCode==68) {
+			printValue('r');
+		}
+		else if (event.keyCode==81) {
+			printValue('s');
+		}
+	}
+	document.onkeydown=keyFunction;
+	document.onkeyup=stop;
+	
+</script>
+
+<body onload="Init()">
+<table style="width:100%;height:100%;border: 5px double rgb(109, 2, 107);align:center;">
+  <tr>
+    <td width=80%>
+	<table style="width:100%;" align="center" >
+		<tr style="width:100%; height:75%;">
+			<td colspan="3" align="center">
+				<!--中間畫面-->
+				<div id="div2" style="width:650px; height:450px;"  >
+					<canvas id="myCanvas" width="650px" height="450px" ></canvas>
+				</div>
+			</td>
+		</tr>
+		<tr style="width:100%; height:25%;">
+			<td align="center">
+				<!--下面小畫面1-->
+				<div id="div4" style="width:200px; height:150px;" onClick="changeDiv('div4','div2')">
+					<canvas id="cvsl" width="200px" height="150px" ></canvas>
+				</div>
+			</td>
+			<td align="center" >
+				<!--下面小畫面2-->
+				<div id="div1" style="width:200px;height:150px;" onClick="changeDiv('div1','div2')">
+					<canvas id="cvsc" width="200px" height="150px" ></canvas>
+				</div>
+			</td>
+			<td align="center" >
+				<!--下面小畫面3-->
+				<div id="div3" style="width:200px; height:150px ;" onClick="changeDiv('div3','div2')">
+					<canvas id="cvsr" width="200px" height="150px" ></canvas>
+				</div>
+			</td>
+		</tr>
+    </table>
+	</td>
+	<td width=20%>
+	<table align="center" style="width:100%; height:100%;">
+		<tr>
+			<td>
+			<table align="left">
+				<tr>
+					<td colspan="4">
+						<p><font size = "3"><b>馬力控制:</font>
+						<h5>0<input type='range' id="s" name="s" min="0" max="100" step="10" >100</h5><br>
+					</td>
+				</tr>
+				<tr>
+					<td></td>
+					<td><a href="#" class="btn" name="u" id="u" onmousedown="OnButtonDown(this)" onmouseup="stop()"><span>F</span></a></td>
+					<td></td>
+				</tr>
+				<tr>
+					<td>
+						<a href="#" class="btn" name="l" id="l" onmousedown="OnButtonDown(this)" onmouseup="stop()"><span>L</span></a>
+					</td>
+					<td>
+						<a href="#" class="btn" name="s" id="s" onmousedown="OnButtonDown(this)" onmouseup="stop()"><span>S</span></a>
+					</td>
+					<td>
+						<a href="#" class="btn" name="r" id="r" onmousedown="OnButtonDown(this)" onmouseup="stop()"><span>R</span></a>
+					</td>
+				</tr>
+				<tr>
+					<td></td>
+					<td><a href="#" class="btn" name="d" id="d" onmousedown="OnButtonDown(this)" onmouseup="stop()"><span>B</span></a></td>
+					<td></td>
+				</tr>
+			</table>
+			</td>
+		</tr>
+		
+		<tr>
+			<td>
+			<table align="left">
+				<tr><hr style="height:3px;">
+					<td colspan="3">
+						<font size = "3"><b>舵機控制:</font>
+						<h6>左　　　　　　　　　右</h6>
+						<input type='range' id="thlr" name="thlr" min="200" max="1300"  >
+					</td>
+					<td ><font size = "3">上</font></br><input type='range' id="thud" name="thud" min="850" max="1500" ></br><font size = "3">下</font></td>
+				</tr>
+				<tr>
+				    <td>
+					<a href="#" class="btn" name="th" id="th" onmousedown="OnButtonDown(this)"><span>轉動視角</span></a>
+					</td>
+				</tr>
+				<tr>
+					<td colspan="4"> <hr style="height:3px;"></td>
+				</tr>
+				<tr>
+				<td colspan="3">
+					<font size = "3"><b>夾子控制:</font>
+				</td>
+				</tr>
+				<tr>
+					<td><a href="#" class="btn" name="o" id="o" onmousedown="OnButtonDown(this)"><span>開啟夾子</span></a></td>
+					<td></td>
+					<td><a href="#" class="btn" name="c" id="c" onmousedown="OnButtonDown(this)"><span>關閉夾子</span></a></td>
+				</tr>
+				<tr>
+					<td><a href="#" class="btn" name="tl" id="tl" onmousedown="OnButtonDown(this)"><span>左轉夾子</span></a></td>
+					<td></td>
+					<td><a href="#" class="btn" name="tr" id="tr" onmousedown="OnButtonDown(this)"><span>右轉夾子</span></td>
+				</tr>
+			</table>
+			</td>
+		</tr>
+	</table>
+	</td>
+  </tr>
+</table>
+</body>
+</html>
+

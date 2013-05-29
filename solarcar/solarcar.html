@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>遠程實驗室管理系統</title>
+<script src="/socket.io/socket.io.js"></script>
+<META HTTP-EQUIV="Pragma" CONTENT="no-cache">
+<META HTTP-EQUIV="Expires" CONTENT="-1">
+<script type=text/javascript src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
+<link type="text/css" href="css/style1.css" />
+<style type="text/css">
+	.button {
+		border: 1px solid #006;
+		background: #ccf;
+	}
+	.button:hover {
+		border: 1px solid #f00;
+		background: #eef;
+	}
+	#thud {
+		-webkit-appearance: slider-vertical;
+		width: 20px;
+		height: 100px;
+	}
+	.btn {		
+		display: inline-block;
+		-webkit-border-radius: 8px;
+		-moz-border-radius: 8px;
+		border-radius: 8px;
+		-webkit-box-shadow:
+		0 8px 0 #1a74a1,
+		0 15px 20px rgba(0,0,0,.35);
+		-moz-box-shadow:
+		0 8px 0 #1a74a1,
+		0 15px 20px rgba(0,0,0,.35);
+		box-shadow:
+		0 8px 0 #1a74a1,
+		0 15px 20px rgba(0,0,0,.35);
+		color:#000;
+	}
+	.btn span {	
+		display: inline-block;
+		padding: 10px  20px;
+		font-family: "cooper-black-std-1", "cooper-black-std-2", Helvetica, Arial, sans-serif;
+		line-height: 1;
+		text-shadow: 0 -1px 1px rgba(19,65,88,.8);
+		background: #3194c6;
+		background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#3194c6), to(#5bacd6));
+		background: -moz-linear-gradient(#3194c6, #5bacd6);
+		-webkit-border-radius: 8px;
+		-moz-border-radius: 8px;
+		border-radius: 8px;
+		-webkit-box-shadow: inset 0 -1px 1px rgba(255,255,255,.15);
+		-moz-box-shadow: inset 0 -1px 1px rgba(255,255,255,.15);
+		box-shadow: inset 0 -1px 1px rgba(255,255,255,.15);
+	}
+	.btn:active {	
+		
+		-webkit-box-shadow: 
+		0 8px 0 #FF00FF,
+		0 12px 10px rgba(0,0,0,.3);
+		-moz-box-shadow: 
+		0 8px 0 #FF00FF,
+		0 12px 10px rgba(0,0,0,.3);
+		box-shadow: 
+		0 8px 0 #FF00FF,
+		0 12px 10px rgba(0,0,0,.3);
+		color:#fff;
+	}
+	.btn:active span {	
+		background: #FF00FF;
+		background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#FF00FF), to(#FF00FF));
+		background: -moz-linear-gradient(#FF00FF, #FF00FF);
+		-webkit-transform: translate(0, 4px);
+		-moz-transform: translate(0, 4px);
+		-o-transform: translate(0, 4px);
+		transform: translate(0, 4px);
+	}
+}
+</style>
+<script>
+	var socket = io.connect();
+    var lftId, midId, cntId, ritId, selfId;
+	var time = 130;
+	function printValue(item) {	
+		var nowaobj = document.getElementById("angel");
+		var nowa = nowaobj.innerHTML;
+		var dir = "";
+		var a = parseInt(item);
+		var na = parseInt(nowa);
+		if (item == "s") dir = "s";
+		else if (a > na) dir = "r";
+		else if (a < na) dir = "l";
+		else dir="s";
+		socket.emit('motor', dir+","+nowa);
+		console.log("ptv.dir: "+dir);
+		console.log("ptv.newa: "+item);
+		console.log("ptv.nowa: "+nowa);
+		if (item != "s") nowaobj.innerHTML = item;
+	}
+
+	function OnButtonDown(obj) {
+		var nowaobj = document.getElementById("angel");
+		var nowa = nowaobj.innerHTML;
+		var res = 1;
+		var a = parseInt(obj.id);
+		var na = parseInt(nowa);
+		if (a > na) 
+			res = (a - na)/15;
+		else if (a < na)  
+			res = (na - a)/15;
+		console.log("res: "+res);
+		clearTimeout(selfId);
+		printValue(obj.id);
+		selfId = setTimeout(function() {
+			stop();
+		}, time*res);
+	}
+	
+	function stop() {
+		printValue('s');
+	}
+	
+	function Init() {
+		midId = setTimeout(function() {
+			midCanvas(500, 300);
+		}, 50);
+
+		cntId = setTimeout(function() {
+			cntCanvas(500, 300);
+		}, 50);
+    }
+	
+	
+	function midCanvas(cw, ch) {
+		drawCanvas(cw, ch, 'myCanvas');
+		
+		midId = setTimeout(function() {
+			midCanvas(cw, ch);
+		}, 50);
+	}
+	
+	function cntCanvas(cw, ch) {
+		drawCanvas(cw, ch, 'cvsc');
+		cntId = setTimeout(function() {
+			cntCanvas(cw, ch);
+		}, 50);
+	}
+	
+    function drawCanvas(cw, ch, id) {
+		var ctx = document.getElementById(id).getContext('2d');
+		var img = new Image();
+		
+		if(id == "myCanvas") {
+			img.src = 'http://10.133.74.111/image.jpg';
+		}
+		else if (id == "cvsc") {
+			img.src = 'http://10.133.74.115/image.jpg';
+		}
+		
+		img.onload = function(){
+			ctx.drawImage(img,0,0, cw, ch);
+		}
+	} 
+	
+	function keyFunction() {
+		if (event.keyCode==87) {
+			printValue('u');
+		}
+		else if (event.keyCode==83) {
+			printValue('d');
+		}
+		else if (event.keyCode==65) {
+			printValue('l');
+		}
+		else if (event.keyCode==68) {
+			printValue('r');
+		}
+		else if (event.keyCode==81) {
+			printValue('s');
+		}
+	}
+	document.onkeydown=keyFunction;
+	document.onkeyup=stop;
+	
+</script>
+
+<body onload="Init()">
+<table style="width:100%;height:100%;border: 5px double rgb(109, 2, 107);align:center;">
+  <tr>
+    <td width=80%>
+	<table style="width:100%;" align="center" >
+		<tr style="width:100%; height:50%;">
+			<td align="center">
+				<!--中間畫面1-->
+				<div id="div1" style="width:500px; height:300px;"  >
+					<canvas id="myCanvas" width="650px" height="450px" ></canvas>
+				</div>
+			</td>
+		</tr>
+		<tr style="width:100%; height:50%;">
+			<td align="center">
+				<!--中間畫面2-->
+				<div id="div2" style="width:500px; height:300px;"  >
+					<canvas id="cvsc" width="650px" height="450px" ></canvas>
+				</div>
+			</td>
+		</tr>
+    </table>
+	</td>
+	<td width=20%>
+	<table align="center" style="width:100%; height:100%;">
+		
+				<tr>
+					<td colspan="2">
+						<font size = "5"><b>目前角度:</font>
+					</td>
+					<td colspan="1"><h1><div id="angel" >90</div></td>
+					<td colspan="1"><font size = "5"><b>度</font></td>
+				</tr>
+				<tr>
+					<td colspan="4">
+						<font size = "6"><b>角度控制:</font>
+					</td>
+				</tr>
+				<tr>
+					<td><a href="#" class="btn" name="0" id="0" onmousedown="OnButtonDown(this)" ><span> 0</span></a></td>
+					<td><a href="#" class="btn" name="15" id="15" onmousedown="OnButtonDown(this)" ><span>15</span></a></td>
+					<td><a href="#" class="btn" name="30" id="30" onmousedown="OnButtonDown(this)" ><span>30</span></a></td>
+					<td><a href="#" class="btn" name="45" id="45" onmousedown="OnButtonDown(this)" ><span>45</span></a></td>
+				</tr>
+				<tr>
+					<td><a href="#" class="btn" name="60" id="60" onmousedown="OnButtonDown(this)" ><span>60</span></a></td>
+					<td><a href="#" class="btn" name="75" id="75" onmousedown="OnButtonDown(this)" ><span>75</span></a></td>
+					<td><a href="#" class="btn" name="90" id="90" onmousedown="OnButtonDown(this)" ><span>90</span></a></td>
+					<td><a href="#" class="btn" name="105" id="105" onmousedown="OnButtonDown(this)" ><span>105</span></a></td>
+				</tr>
+				<tr>
+					<td><a href="#" class="btn" name="120" id="120" onmousedown="OnButtonDown(this)" ><span>120</span></a></td>
+					<td><a href="#" class="btn" name="135" id="135" onmousedown="OnButtonDown(this)" ><span>135</span></a></td>
+					<td><a href="#" class="btn" name="150" id="150" onmousedown="OnButtonDown(this)" ><span>150</span></a></td>
+					<td><a href="#" class="btn" name="165" id="165" onmousedown="OnButtonDown(this)" ><span>165</span></a></td>
+				</tr>
+				<tr>
+					<td colspan="4"><a href="#" class="btn" name="180" id="180" onmousedown="OnButtonDown(this)" ><span>180</span></a></td>
+				</tr>
+			</table>
+			</td>
+  </tr>
+</table>
+</body>
+</html>
+
